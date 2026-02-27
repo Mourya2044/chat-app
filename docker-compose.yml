@@ -1,0 +1,84 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: chatpulse-db
+    environment:
+      POSTGRES_DB: chatapp
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: chatpulse_dev_pass
+    ports:
+      - "5432:5432"
+    command: >
+      postgres
+      -c ssl=off
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+      build:
+        context: ./backend
+        dockerfile: Dockerfile
+      container_name: chatpulse-backend
+      environment:
+        PORT: 5000
+        NODE_ENV: development
+        DB_HOST: postgres
+        DB_PORT: 5432
+        DB_NAME: chatapp
+        DB_USER: postgres
+        DB_PASSWORD: chatpulse_dev_pass
+        JWT_SECRET: change_this_in_production_super_secret
+        JWT_EXPIRES_IN: 7d
+      ports:
+        - "5000:5000"
+      volumes:
+        - /app/node_modules          # ← drop bind mount, let watch handle sync
+      depends_on:
+        postgres:
+          condition: service_healthy
+      command: npm run dev
+      develop:
+        watch:
+          - action: sync+restart     # ← sync files then restart nodemon
+            path: ./backend/src
+            target: /app/src
+            ignore:
+              - node_modules/
+          - action: sync+restart
+            path: ./backend/config
+            target: /app/config
+            ignore:
+              - node_modules/
+          - action: rebuild          # ← full image rebuild if deps change
+            path: ./backend/package.json
+
+  frontend:
+      build:
+        context: ./frontend
+        dockerfile: Dockerfile
+      container_name: chatpulse-frontend
+      ports:
+        - "3000:3000"
+      volumes:
+        - /app/node_modules          # ← only keep node_modules, drop the bind mount
+      depends_on:
+        - backend
+      command: npm run dev -- --host
+      develop:
+        watch:
+          - action: sync
+            path: ./frontend/src
+            target: /app/src
+            ignore:
+              - node_modules/
+          - action: rebuild
+            path: ./frontend/package.json
+
+volumes:
+  postgres_data:
+  uploads_data:

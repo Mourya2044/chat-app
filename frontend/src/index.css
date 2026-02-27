@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #334155 transparent;
+  }
+  *::-webkit-scrollbar { width: 6px; height: 6px; }
+  *::-webkit-scrollbar-track { background: transparent; }
+  *::-webkit-scrollbar-thumb { background-color: #334155; border-radius: 3px; }
+  
+  html, body, #root {
+    height: 100%;
+    @apply bg-surface-950 text-slate-100;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary-600 hover:bg-primary-700 text-white font-medium px-4 py-2 rounded-lg
+           transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-ghost {
+    @apply hover:bg-surface-800 text-slate-300 hover:text-white px-3 py-2 rounded-lg
+           transition-colors duration-200;
+  }
+  .input-field {
+    @apply bg-surface-800 border border-surface-700 text-slate-100 placeholder-slate-500
+           rounded-lg px-3 py-2 w-full focus:outline-none focus:border-primary-500
+           transition-colors duration-200;
+  }
+  .message-bubble-own {
+    @apply bg-primary-600 text-white rounded-2xl rounded-br-sm px-4 py-2 max-w-xs lg:max-w-md;
+  }
+  .message-bubble-other {
+    @apply bg-surface-800 text-slate-100 rounded-2xl rounded-bl-sm px-4 py-2 max-w-xs lg:max-w-md;
+  }
+}
