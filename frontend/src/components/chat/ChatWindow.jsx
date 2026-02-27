@@ -3,9 +3,9 @@ import { useChat } from '../../contexts/ChatContext';
 import { useAuth } from '../../contexts/AuthContext';
 import MessageBubble from './MessageBubble';
 import MessageInput from './MessageInput';
-import Avatar from '../ui/Avatar';
+import Avatar  from '../ui/Avatar';
 import { Button } from '../ui/Button';
-import { ScrollArea } from '../ui/ScrollArea';
+import { ScrollArea } from '../ui/scroll-area';
 
 export default function ChatWindow() {
   const { activeChat, messages, typingUsers, members, onlineUsers, pendingMessage,

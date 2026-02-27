@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import Avatar from '../ui/Avatar';
+import Avatar  from '../ui/Avatar';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { useAuth } from '../../contexts/AuthContext';

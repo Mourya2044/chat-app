@@ -58,26 +58,27 @@ services:
             path: ./backend/package.json
 
   frontend:
-      build:
-        context: ./frontend
-        dockerfile: Dockerfile
-      container_name: chatpulse-frontend
-      ports:
-        - "3000:3000"
-      volumes:
-        - /app/node_modules          # ← only keep node_modules, drop the bind mount
-      depends_on:
-        - backend
-      command: npm run dev -- --host
-      develop:
-        watch:
-          - action: sync
-            path: ./frontend/src
-            target: /app/src
-            ignore:
-              - node_modules/
-          - action: rebuild
-            path: ./frontend/package.json
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: chatpulse-frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - /app/node_modules          # 2. Keep this to protect container node_modules
+    depends_on:
+      - backend
+    command: npm run dev
+    develop:
+      watch:
+        - action: sync
+          path: ./frontend/src
+          target: /app/src
+        - action: sync             # 3. Explicitly sync config files if they change
+          path: ./frontend/vite.config.js
+          target: /app/vite.config.js
+        - action: rebuild
+          path: ./frontend/package.json
 
 volumes:
   postgres_data:
