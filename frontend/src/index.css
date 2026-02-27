@@ -96,9 +96,9 @@
            transition-colors duration-200;
   }
   .message-bubble-own {
-    @apply bg-primary text-primary-foreground rounded-2xl rounded-br-sm px-4 py-2 max-w-xs lg:max-w-md;
+    @apply bg-primary text-primary-foreground rounded-3xl rounded-br-sm p-3 max-w-xs lg:max-w-md;
   }
   .message-bubble-other {
-    @apply bg-card text-card-foreground rounded-2xl rounded-bl-sm px-4 py-2 max-w-xs lg:max-w-md;
+    @apply bg-secondary text-secondary-foreground rounded-3xl rounded-bl-sm p-3 max-w-xs lg:max-w-md;
   }
 }

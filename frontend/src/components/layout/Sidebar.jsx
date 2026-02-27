@@ -9,6 +9,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/Tabs';
 import { Badge } from '../ui/Badge';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { Search, LogOut } from 'lucide-react'
 
 export default function Sidebar() {
   const { user, logout } = useAuth();
@@ -54,7 +55,7 @@ export default function Sidebar() {
       setShowNewRoom(false);
       setNewRoomName('');
       setNewRoomDesc('');
-      toast.success('Chatroom created! 🎉');
+      toast.success('Chatroom created!');
     } catch (err) {
       toast.error(err.response?.data?.error || 'Failed to create chatroom');
     }
@@ -74,7 +75,7 @@ export default function Sidebar() {
             </div>
             <span className="font-bold text-foreground">ChatPulse</span>
           </div>
-          <div className={`w-2 h-2 rounded-full ${connected ? 'bg-green-400' : 'bg-red-400'}`} title={connected ? 'Connected' : 'Disconnected'} />
+          <div className={`w-2 h-2 rounded-full ${connected ? 'bg-green-800' : 'bg-red-800'}`} title={connected ? 'Connected' : 'Disconnected'} />
         </div>
       </div>
 
@@ -129,7 +130,7 @@ export default function Sidebar() {
           {chatrooms.map(room => (
             <button key={room.id} onClick={() => openChat({ type: 'chatroom', id: room.id, data: room })}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-md mb-0.5 transition-colors text-left
-                ${activeChat?.id === room.id ? 'bg-primary/20 text-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}>
+                ${activeChat?.id === room.id ? 'bg-primary/20 text-foreground' : 'text-foreground hover:bg-muted hover:text-foreground'}`}>
               <span className="text-lg">#</span>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{room.name}</p>
@@ -149,11 +150,9 @@ export default function Sidebar() {
                 placeholder="Find or start a DM..."
                 value={searchQuery} 
                 onChange={e => handleSearch(e.target.value)} 
+                
               />
-              <svg className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none"
-                fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+              <Search className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none"/>
             </div>
           </div>
 
@@ -200,18 +199,15 @@ export default function Sidebar() {
           showOnline isOnline />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-foreground truncate">{user?.username}</p>
-          <p className="text-xs text-green-400">Online</p>
+          <p className="text-xs text-green-700">Online</p>
         </div>
         <Button 
           onClick={logout} 
           variant="ghost" 
           size="icon"
-          className="h-8 w-8"
+          className="h-8 w-8 hover:text-red-400"
           title="Logout">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-          </svg>
+          <LogOut />
         </Button>
       </div>
     </div>

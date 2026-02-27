@@ -67,7 +67,7 @@ export default function ChatWindow() {
             {chatDesc && <p className="text-xs text-muted-foreground">{chatDesc}</p>}
             {!isRoom && (
               <p className="text-xs text-muted-foreground">
-                {onlineUsers.has(activeChat.data?.partner_id) ? '🟢 Online' : '⚫ Offline'}
+                {onlineUsers.has(activeChat.data?.partner_id) ? 'Online' : 'Offline'}
               </p>
             )}
           </div>

@@ -1,8 +1,8 @@
 // trollDetection.js
 
 const SENSITIVE_PATTERNS = [
-  /\b\d{6}\b/,
-  /otp[\s:]+\d+/i,
+  /\b\d{6}\b/, // 6-digit OTP
+  /\botp[\s:]+(?=[a-z0-9]{4,8}\b)(?=.*[a-z])(?=.*\d)[a-z0-9]+\b/i, // Alphanumeric OTP
   /one[.\s-]?time[.\s-]?password/i,
   /\bpassword[\s:]+\S+/i,
   /\b4[0-9]{15}\b/,

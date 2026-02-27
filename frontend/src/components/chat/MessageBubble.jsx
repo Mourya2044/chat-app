@@ -5,6 +5,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSocket } from '../../contexts/SocketContext';
+import { TriangleAlert, SquarePen, Trash } from 'lucide-react'
 
 export default function MessageBubble({ message, showAvatar, chatroomId, conversationId }) {
   const { user } = useAuth();
@@ -79,7 +80,7 @@ export default function MessageBubble({ message, showAvatar, chatroomId, convers
               <span className="italic text-muted-foreground text-sm">Message deleted</span>
             ) : message.message_type === 'image' ? (
               <img src={message.file_url} alt={message.file_name || 'Image'}
-                className="max-w-xs rounded-lg cursor-pointer"
+                className="max-w-xs rounded-2xl cursor-pointer"
                 onClick={() => window.open(message.file_url, '_blank')} />
             ) : message.message_type === 'video' ? (
               <video src={message.file_url} controls className="max-w-xs rounded-lg" />
@@ -98,7 +99,7 @@ export default function MessageBubble({ message, showAvatar, chatroomId, convers
 
             {/* Sensitive flag */}
             {message.flagged_sensitive && (
-              <span className="absolute -top-1 -right-1 text-xs">⚠️</span>
+              <span className="absolute -top-1 -right-1 text-xs"><TriangleAlert className="size-xs text-yellow-600"/></span>
             )}
           </div>
         )}
@@ -119,10 +120,7 @@ export default function MessageBubble({ message, showAvatar, chatroomId, convers
               variant="ghost"
               size="icon"
               className="h-6 w-6">
-              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
+              <SquarePen />
             </Button>
           )}
           {isOwn && (
@@ -131,10 +129,7 @@ export default function MessageBubble({ message, showAvatar, chatroomId, convers
               variant="ghost"
               size="icon"
               className="h-6 w-6 hover:text-red-400">
-              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
+              <Trash />
             </Button>
           )}
         </div>
