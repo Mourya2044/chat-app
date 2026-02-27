@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import Avatar from '../ui/Avatar';
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSocket } from '../../contexts/SocketContext';
 
@@ -28,7 +30,7 @@ export default function MessageBubble({ message, showAvatar, chatroomId, convers
   if (message.message_type === 'system') {
     return (
       <div className="flex justify-center my-2">
-        <span className="text-xs text-slate-500 bg-surface-800 px-3 py-1 rounded-full">{message.content}</span>
+        <span className="text-xs text-muted-foreground bg-muted px-3 py-1 rounded-full">{message.content}</span>
       </div>
     );
   }
@@ -47,13 +49,13 @@ export default function MessageBubble({ message, showAvatar, chatroomId, convers
       <div className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'} flex-1 min-w-0`}>
         {/* Sender name */}
         {showAvatar && !isOwn && (
-          <span className="text-xs font-semibold text-primary-400 mb-1">{message.sender_username}</span>
+          <span className="text-xs font-semibold text-primary mb-1">{message.sender_username}</span>
         )}
 
         {/* Reply context */}
         {message.reply_content && (
-          <div className={`mb-1 px-3 py-1 rounded-lg border-l-2 border-primary-500 bg-surface-800/50 text-xs text-slate-400 max-w-xs`}>
-            <span className="font-medium text-primary-400">{message.reply_sender}: </span>
+          <div className={`mb-1 px-3 py-1 rounded-md border-l-2 border-primary bg-muted/50 text-xs text-muted-foreground max-w-xs`}>
+            <span className="font-medium text-primary">{message.reply_sender}: </span>
             {message.reply_content.slice(0, 80)}{message.reply_content.length > 80 ? '...' : ''}
           </div>
         )}
@@ -61,16 +63,20 @@ export default function MessageBubble({ message, showAvatar, chatroomId, convers
         {/* Message content */}
         {editing ? (
           <div className="flex gap-2 items-end w-full max-w-sm">
-            <input value={editText} onChange={e => setEditText(e.target.value)}
+            <Input 
+              value={editText} 
+              onChange={e => setEditText(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleEdit(); if (e.key === 'Escape') setEditing(false); }}
-              className="input-field text-sm flex-1" autoFocus />
-            <button onClick={handleEdit} className="btn-primary text-xs py-1 px-2">Save</button>
-            <button onClick={() => setEditing(false)} className="btn-ghost text-xs py-1 px-2">Cancel</button>
+              className="text-sm flex-1 h-9" 
+              autoFocus 
+            />
+            <Button onClick={handleEdit} variant="default" size="sm" className="h-8 text-xs">Save</Button>
+            <Button onClick={() => setEditing(false)} variant="ghost" size="sm" className="h-8 text-xs">Cancel</Button>
           </div>
         ) : (
           <div className={`relative ${isOwn ? 'message-bubble-own' : 'message-bubble-other'}`}>
             {message.is_deleted ? (
-              <span className="italic text-slate-400 text-sm">Message deleted</span>
+              <span className="italic text-muted-foreground text-sm">Message deleted</span>
             ) : message.message_type === 'image' ? (
               <img src={message.file_url} alt={message.file_name || 'Image'}
                 className="max-w-xs rounded-lg cursor-pointer"
@@ -99,8 +105,8 @@ export default function MessageBubble({ message, showAvatar, chatroomId, convers
 
         {/* Timestamp & edited */}
         <div className="flex items-center gap-1 mt-0.5">
-          <span className="text-xs text-slate-500">{timeAgo}</span>
-          {message.is_edited && <span className="text-xs text-slate-500">(edited)</span>}
+          <span className="text-xs text-muted-foreground">{timeAgo}</span>
+          {message.is_edited && <span className="text-xs text-muted-foreground">(edited)</span>}
         </div>
       </div>
 
@@ -108,22 +114,28 @@ export default function MessageBubble({ message, showAvatar, chatroomId, convers
       {showActions && !message.is_deleted && !editing && (
         <div className={`flex items-start gap-1 mt-1 ${isOwn ? 'flex-row-reverse' : ''}`}>
           {isOwn && message.message_type === 'text' && (
-            <button onClick={() => setEditing(true)}
-              className="text-slate-400 hover:text-white p-1 rounded hover:bg-surface-700">
+            <Button 
+              onClick={() => setEditing(true)}
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6">
               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                   d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
-            </button>
+            </Button>
           )}
           {isOwn && (
-            <button onClick={handleDelete}
-              className="text-slate-400 hover:text-red-400 p-1 rounded hover:bg-surface-700">
+            <Button 
+              onClick={handleDelete}
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 hover:text-red-400">
               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                   d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
-            </button>
+            </Button>
           )}
         </div>
       )}

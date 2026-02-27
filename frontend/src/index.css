@@ -3,38 +3,69 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 98%;
+    --primary: 213 100% 50%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 198 100% 50%;
+    --secondary-foreground: 0 0% 3.9%;
+    --muted: 200 7.3% 35%;
+    --muted-foreground: 200 3% 60%;
+    --accent: 37 100% 55%;
+    --accent-foreground: 0 0% 3.9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 200 3% 20%;
+    --input: 200 3% 16%;
+    --ring: 213 100% 50%;
+    --radius: 0.5rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
   * {
     scrollbar-width: thin;
-    scrollbar-color: #334155 transparent;
+    scrollbar-color: #475569 transparent;
   }
   *::-webkit-scrollbar { width: 6px; height: 6px; }
   *::-webkit-scrollbar-track { background: transparent; }
-  *::-webkit-scrollbar-thumb { background-color: #334155; border-radius: 3px; }
+  *::-webkit-scrollbar-thumb { background-color: #475569; border-radius: 3px; }
+  *::-webkit-scrollbar-thumb:hover { background-color: #64748b; }
   
   html, body, #root {
     height: 100%;
-    @apply bg-surface-950 text-slate-100;
+    @apply bg-background text-foreground;
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-primary-600 hover:bg-primary-700 text-white font-medium px-4 py-2 rounded-lg
+    @apply bg-primary hover:bg-blue-700 text-primary-foreground font-medium px-4 py-2 rounded-lg
            transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .btn-ghost {
-    @apply hover:bg-surface-800 text-slate-300 hover:text-white px-3 py-2 rounded-lg
+    @apply hover:bg-muted text-muted-foreground hover:text-foreground px-3 py-2 rounded-lg
            transition-colors duration-200;
   }
   .input-field {
-    @apply bg-surface-800 border border-surface-700 text-slate-100 placeholder-slate-500
-           rounded-lg px-3 py-2 w-full focus:outline-none focus:border-primary-500
+    @apply bg-input border border-border text-foreground placeholder-muted-foreground
+           rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background
            transition-colors duration-200;
   }
   .message-bubble-own {
-    @apply bg-primary-600 text-white rounded-2xl rounded-br-sm px-4 py-2 max-w-xs lg:max-w-md;
+    @apply bg-primary text-primary-foreground rounded-2xl rounded-br-sm px-4 py-2 max-w-xs lg:max-w-md;
   }
   .message-bubble-other {
-    @apply bg-surface-800 text-slate-100 rounded-2xl rounded-bl-sm px-4 py-2 max-w-xs lg:max-w-md;
+    @apply bg-card text-card-foreground rounded-2xl rounded-bl-sm px-4 py-2 max-w-xs lg:max-w-md;
   }
 }

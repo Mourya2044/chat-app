@@ -2,6 +2,8 @@ import { useState, useRef, useCallback } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { useChat } from '../../contexts/ChatContext';
+import { Button } from '../ui/Button';
+import { Textarea } from '../ui/Textarea';
 
 export default function MessageInput({ onReply, replyTo, onCancelReply }) {
   const { sendMessage, emitTyping, activeChat } = useChat();
@@ -78,27 +80,34 @@ export default function MessageInput({ onReply, replyTo, onCancelReply }) {
   if (!activeChat) return null;
 
   return (
-    <div className="p-4 border-t border-surface-700">
+    <div className="p-4 border-t border-border bg-card">
       {/* Reply preview */}
       {replyTo && (
-        <div className="flex items-center gap-2 mb-2 px-3 py-2 bg-surface-800 rounded-lg border-l-2 border-primary-500">
+        <div className="flex items-center gap-2 mb-2 px-3 py-2 bg-muted rounded-md border-l-2 border-primary">
           <div className="flex-1 min-w-0">
-            <span className="text-xs font-medium text-primary-400">{replyTo.sender_username}</span>
-            <p className="text-xs text-slate-400 truncate">{replyTo.content}</p>
+            <span className="text-xs font-medium text-primary">{replyTo.sender_username}</span>
+            <p className="text-xs text-muted-foreground truncate">{replyTo.content}</p>
           </div>
-          <button onClick={onCancelReply} className="text-slate-400 hover:text-white p-1">
+          <Button 
+            onClick={onCancelReply} 
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6">
             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
-          </button>
+          </Button>
         </div>
       )}
 
       <div className="flex items-end gap-2">
         {/* File upload */}
-        <button onClick={() => fileRef.current?.click()}
+        <Button 
+          onClick={() => fileRef.current?.click()}
           disabled={uploading}
-          className="text-slate-400 hover:text-primary-400 p-2 rounded-lg hover:bg-surface-800 transition-colors flex-shrink-0">
+          variant="ghost"
+          size="icon"
+          className="h-10 w-10 flex-shrink-0">
           {uploading ? (
             <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -110,14 +119,14 @@ export default function MessageInput({ onReply, replyTo, onCancelReply }) {
                 d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
             </svg>
           )}
-        </button>
+        </Button>
         <input ref={fileRef} type="file" className="hidden"
           accept="image/*,video/*,.pdf,.doc,.docx,.txt"
           onChange={handleFileUpload} />
 
         {/* Text input */}
-        <textarea
-          className="input-field resize-none flex-1 max-h-32"
+        <Textarea
+          className="flex-1 max-h-32 resize-none"
           placeholder={`Message ${activeChat.type === 'chatroom' ? '#' + activeChat.data?.name : activeChat.data?.partner_username}...`}
           value={text}
           onChange={e => { setText(e.target.value); handleTyping(); }}
@@ -131,14 +140,17 @@ export default function MessageInput({ onReply, replyTo, onCancelReply }) {
         />
 
         {/* Send button */}
-        <button onClick={handleSend} disabled={!text.trim()}
-          className="bg-primary-600 hover:bg-primary-700 disabled:opacity-30 disabled:cursor-not-allowed
-            text-white p-2 rounded-lg transition-colors flex-shrink-0">
+        <Button 
+          onClick={handleSend} 
+          disabled={!text.trim()}
+          variant="default"
+          size="icon"
+          className="h-10 w-10 flex-shrink-0">
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
               d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
           </svg>
-        </button>
+        </Button>
       </div>
     </div>
   );
