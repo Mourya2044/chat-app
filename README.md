@@ -18,7 +18,7 @@ A production-grade, real-time chat application built with the **PERN stack** (Po
 - **Message grouping** — consecutive messages grouped visually
 
 ### Security & Moderation
-- **Troll detection** — pattern-matching detects harsh language; sends soothing AI-powered responses to offenders privately (using Gemini API or built-in fallback)
+- **Troll detection** — pattern-matching detects harsh language; sends soothing AI-powered responses to offenders privately (using Groq API or built-in fallback)
 - **Sensitive info warnings** — detects OTPs, passwords, card numbers, SSNs in group messages and prompts user confirmation before sending
 - **JWT authentication** — secure stateless auth with token expiry
 
@@ -153,7 +153,8 @@ JWT_SECRET=your_super_secret_jwt_key
 JWT_EXPIRES_IN=7d
 
 # Optional: AI Troll Detection
-GEMINI_API_KEY=your_gemini_api_key
+GROQ_API_KEY=your_groq_api_key
+GROQ_MODEL=llama-3.1-8b-instant
 ```
 
 ---
@@ -219,7 +220,7 @@ GEMINI_API_KEY=your_gemini_api_key
 - Pattern-based detection scores each message
 - If score ≥ threshold (2 matches), sends a **private soothing message** to the sender
 - The message still gets delivered (not overly restrictive)
-- If `GEMINI_API_KEY` is set, uses Gemini to craft personalized responses
+- If `GROQ_API_KEY` is set, uses Groq to craft personalized responses
 - Falls back to curated empathetic messages if AI is unavailable
 
 ### Sensitive Info Protection
@@ -264,5 +265,5 @@ Key tables: `users`, `chatrooms`, `chatroom_members`, `conversations`, `conversa
 | HTTP Client | Axios |
 | Routing | React Router v6 |
 | Notifications | react-hot-toast |
-| AI (optional) | Google Gemini API |
+| AI (optional) | Groq API |
 | Containerization | Docker + Docker Compose |

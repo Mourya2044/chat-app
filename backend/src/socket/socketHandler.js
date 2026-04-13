@@ -110,38 +110,49 @@ const setupSocket = (io) => {
         // ── Analyze text messages only ───────────────────────
         if (content && messageType === 'text') {
           let analysis;
+
           try {
             analysis = await analyzeMessage(content, user.username);
           } catch (err) {
-            // Don't let analysis failure block message sending
-            console.error('[TROLL] analyzeMessage failed:', err.message);
-            analysis = { isSensitive: false, isTroll: false, soothingMessage: null };
+            console.error('[AI] analyzeMessage failed:', err.message);
+
+            analysis = {
+              isSensitive: false,
+              isTroll: false,
+              severity: 'low',
+              warningMessage: null,
+            };
           }
 
-          console.log(`[ANALYSIS] sensitive=${analysis.isSensitive} troll=${analysis.isTroll}`);
+          console.log(`[ANALYSIS] sensitive=${analysis.isSensitive} troll=${analysis.isTroll} severity=${analysis.severity}`);
 
-          // Sensitive info — block and warn sender
           if (analysis.isSensitive) {
             socket.emit('message:sensitive_warning', {
-              message: '⚠️ Your message might contain sensitive information (OTP, password, card number, etc.). Are you sure you want to send this to the group?',
+              message: '⚠️ This message may contain sensitive information. Are you sure you want to send it?',
               pendingMessage: data,
             });
-            return; // Stop here — wait for confirmation
+            return;
           }
 
-          // Troll detected — warn sender privately, but still send message
           if (analysis.isTroll) {
+            // 🔥 LLM-generated warning message
             socket.emit('message:troll_warning', {
-              message: analysis.soothingMessage,
-              type: 'soothing',
+              message: analysis.warningMessage || 'Please keep the conversation respectful.',
+              severity: analysis.severity,
+              type: 'ai-warning',
             });
 
-            // Log async — don't await so it doesn't delay message sending
+            // 🔥 Log with severity + AI response
             pool.query(
               `INSERT INTO troll_logs (user_id, chatroom_id, detection_reason, ai_response)
-               VALUES ($1, $2, $3, $4)`,
-              [user.id, chatroomId, 'Pattern match', analysis.soothingMessage]
-            ).catch(err => console.error('[TROLL] Log insert failed:', err.message));
+       VALUES ($1, $2, $3, $4)`,
+              [
+                user.id,
+                chatroomId,
+                `AI-${analysis.severity}`,   // 👈 upgraded logging
+                analysis.warningMessage
+              ]
+            ).catch(err => console.error('[TROLL LOG] Failed:', err.message));
           }
         }
 

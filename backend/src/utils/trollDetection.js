@@ -1,115 +1,164 @@
-// trollDetection.js
+// ===============================
+// 🔐 SENSITIVE DETECTION (fallback layer)
+// ===============================
 
 const SENSITIVE_PATTERNS = [
-  /\b\d{6}\b/, // 6-digit OTP
-  /\botp[\s:]+(?=[a-z0-9]{4,8}\b)(?=.*[a-z])(?=.*\d)[a-z0-9]+\b/i, // Alphanumeric OTP
-  /one[.\s-]?time[.\s-]?password/i,
+  /\b\d{6}\b/,
   /\bpassword[\s:]+\S+/i,
   /\b4[0-9]{15}\b/,
   /\b5[1-5][0-9]{14}\b/,
-  /\b[0-9]{4}[\s-][0-9]{4}[\s-][0-9]{4}[\s-][0-9]{4}\b/,
-  /\b\d{3}-\d{2}-\d{4}\b/,
   /cvv[\s:]+\d{3,4}/i,
-  /\biban[\s:]+[a-z]{2}\d{2}/i,
 ];
 
-// ← No 'g' flag — regex with 'g' retains lastIndex state between calls
-//   causing alternating true/false results on repeated tests
+// ===============================
+// 😡 BASIC TOXIC FALLBACK
+// ===============================
+
 const TROLL_WORDS = [
-  'idiot', 'stupid', 'dumb', 'moron', 'loser', 'trash', 'worthless',
-  'shut up', 'go to hell', 'drop dead', 'get lost',
-  'hate you', 'kill yourself', 'end yourself', 'kys',
+  'idiot', 'stupid', 'moron', 'loser',
+  'fuck you', 'kill', 'hate you', 'kys'
 ];
 
-const TROLL_THRESHOLD = 1;
+// ===============================
+// 🧠 HELPERS
+// ===============================
 
-const containsSensitiveInfo = (content) => {
-  if (!content) return false;
-  const lower = content.toLowerCase();
-  return SENSITIVE_PATTERNS.some(pattern => pattern.test(lower));
+const normalize = (text) => text?.toLowerCase().trim() || '';
+
+const containsSensitiveInfo = (text) => {
+  return SENSITIVE_PATTERNS.some(p => p.test(text));
 };
 
-const getTrollScore = (content) => {
-  if (!content) return 0;
-  const lower = content.toLowerCase();
-  let score = 0;
-
-  for (const word of TROLL_WORDS) {
-    if (lower.includes(word)) {
-      score++;
-      console.log(`[TROLL] Matched: "${word}" | message: "${content}" | score: ${score}`);
-    }
-  }
-
-  return score;
+const basicToxicCheck = (text) => {
+  return TROLL_WORDS.some(word => text.includes(word));
 };
 
-const getSoothingResponse = async (trollMessage, username) => {
-  if (process.env.GEMINI_API_KEY) {
-    try {
-      const response = await callGemini(trollMessage, username);
-      if (response) return response;
-    } catch (e) {
-      console.warn('[TROLL] Gemini failed, using fallback:', e.message);
-    }
-  }
+// ===============================
+// 🤖 SINGLE GROQ CALL
+// ===============================
 
-  const soothingMessages = [
-    `Hey ${username} 🌟 Looks like things might be getting a bit heated! Remember, everyone here is human and having their own day. Maybe take a breather and come back with good vibes?`,
-    `${username}, we all have rough days sometimes 💙 This is a safe space for everyone. Let's keep the conversation kind and constructive!`,
-    `Hey there ${username} — I noticed the energy in your message felt a bit tense. We're all here to connect and have a good time. What's on your mind? Maybe we can talk it through!`,
-    `${username}, I see you're feeling strongly about something 🤗 That passion is great — let's channel it into a constructive conversation. Everyone here values your thoughts!`,
-    `Just a gentle nudge, ${username} 😊 — let's keep this space welcoming for everyone. Sometimes rewording things can help us be heard better. You've got this!`,
-  ];
+const analyzeWithGroq = async (message, username) => {
+  const prompt = `
+You are a strict moderation system.
 
-  return soothingMessages[Math.floor(Math.random() * soothingMessages.length)];
-};
+Analyze the message and return a JSON response ONLY.
 
-const callGemini = async (message, username) => {
-  const { default: fetch } = await import('node-fetch');
+Message: "${message}"
 
-  const prompt = `A user named "${username}" sent this message in a group chat that was flagged for potentially harsh language: "${message}". 
+Tasks:
+1. Detect if the message is toxic/abusive (troll)
+2. Detect if it contains sensitive/private information
+3. Generate a calm, respectful warning message if toxic
 
-Please write a SHORT, warm, and empathetic message (2-3 sentences max) from a chat bot to this user. The goal is to gently remind them to keep the conversation friendly, without lecturing them or being preachy. Be understanding and human. Don't repeat "I understand" too much. Keep it light and caring.`;
+Rules:
+- Toxic = insults, threats, harassment, abuse
+- Sensitive = OTP, passwords, financial data, personal data
+- Warning message should be polite, short, human-like
+- If NOT toxic → warningMessage should be null
+
+Return STRICT JSON format:
+
+{
+  "isTroll": boolean,
+  "isSensitive": boolean,
+  "severity": "low" | "medium" | "high",
+  "warningMessage": string | null
+}
+`;
 
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${process.env.GEMINI_API_KEY}`,
+    'https://api.groq.com/openai/v1/chat/completions',
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+      },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { maxOutputTokens: 150, temperature: 0.7 },
+        model: process.env.GROQ_MODEL || 'llama-3.1-8b-instant',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0,
       }),
     }
   );
 
+  if (!res.ok) {
+    throw new Error(`Groq API error: ${res.status}`);
+  }
+
   const data = await res.json();
-  return data?.candidates?.[0]?.content?.parts?.[0]?.text || null;
+  const raw = data?.choices?.[0]?.message?.content?.trim();
+
+  try {
+    return JSON.parse(raw);
+  } catch (err) {
+    throw new Error('Invalid JSON from Groq');
+  }
 };
 
-const analyzeMessage = async (content, username) => {
+// ===============================
+// 💬 FALLBACK MESSAGE
+// ===============================
+
+const fallbackMessage = (username) => {
+  return `Hey ${username}, let's keep the conversation respectful.`;
+};
+
+// ===============================
+// 🎯 MAIN FUNCTION (v3)
+// ===============================
+
+const analyzeMessage = async (content, username = 'User') => {
   const result = {
     isSensitive: false,
     isTroll: false,
-    soothingMessage: null,
+    severity: 'low',
+    warningMessage: null,
   };
 
   if (!content) return result;
 
-  result.isSensitive = containsSensitiveInfo(content);
-  console.log(`[SENSITIVE] "${content}" → ${result.isSensitive}`);
+  const text = normalize(content);
 
-  const trollScore = getTrollScore(content);
-  console.log(`[TROLL] Final score: ${trollScore} (threshold: ${TROLL_THRESHOLD})`);
+  // ===============================
+  // 🔥 PRIMARY: GROQ (single call)
+  // ===============================
 
-  if (trollScore >= TROLL_THRESHOLD) {
-    result.isTroll = true;
-    result.soothingMessage = await getSoothingResponse(content, username);
-    console.log(`[TROLL] Soothing message: "${result.soothingMessage}"`);
+  if (process.env.GROQ_API_KEY) {
+    try {
+      const aiResult = await analyzeWithGroq(content, username);
+
+      return {
+        isSensitive: aiResult.isSensitive,
+        isTroll: aiResult.isTroll,
+        severity: aiResult.severity || 'low',
+        warningMessage: aiResult.warningMessage,
+      };
+
+    } catch (err) {
+      console.warn('[GROQ FAILED] Falling back:', err.message);
+    }
   }
 
-  return result;
+  // ===============================
+  // 🧱 FALLBACK LOGIC
+  // ===============================
+
+  const isSensitive = containsSensitiveInfo(text);
+  const isTroll = basicToxicCheck(text);
+
+  return {
+    isSensitive,
+    isTroll,
+    severity: isTroll ? 'medium' : 'low',
+    warningMessage: isTroll ? fallbackMessage(username) : null,
+  };
 };
 
-export { analyzeMessage, containsSensitiveInfo, getTrollScore };
+// ===============================
+// 📦 EXPORT
+// ===============================
+
+export {
+  analyzeMessage
+};
