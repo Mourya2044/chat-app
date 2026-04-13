@@ -1,31 +1,10 @@
-import multer, { diskStorage } from 'multer';
-import { join, extname } from 'path';
-import { existsSync, mkdirSync } from 'fs';
-import { v4 as uuidv4 } from 'uuid';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+import multer from 'multer';
+import { v2 as cloudinary } from 'cloudinary';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const UPLOAD_DIR = join(__dirname, '../../uploads');
-
-// Ensure upload directories exist
-['images', 'videos', 'files'].forEach(dir => {
-  const dirPath = join(UPLOAD_DIR, dir);
-  if (!existsSync(dirPath)) mkdirSync(dirPath, { recursive: true });
-});
-
-const storage = diskStorage({
-  destination: (req, file, cb) => {
-    let subDir = 'files';
-    if (file.mimetype.startsWith('image/')) subDir = 'images';
-    else if (file.mimetype.startsWith('video/')) subDir = 'videos';
-    cb(null, join(UPLOAD_DIR, subDir));
-  },
-  filename: (req, file, cb) => {
-    const ext = extname(file.originalname);
-    cb(null, `${uuidv4()}${ext}`);
-  }
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
 const fileFilter = (req, file, cb) => {
@@ -44,29 +23,66 @@ const fileFilter = (req, file, cb) => {
 };
 
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   fileFilter,
   limits: { fileSize: parseInt(process.env.MAX_FILE_SIZE) || 10 * 1024 * 1024 }
 });
 
-// Upload route handler
-const uploadFile = (req, res) => {
-  const file = req.file;
-  if (!file) return res.status(400).json({ error: 'No file uploaded' });
+const inferMessageType = (mimeType) => {
+  if (mimeType.startsWith('image/')) return 'image';
+  if (mimeType.startsWith('video/')) return 'video';
+  return 'file';
+};
 
-  let subDir = 'files';
-  if (file.mimetype.startsWith('image/')) subDir = 'images';
-  else if (file.mimetype.startsWith('video/')) subDir = 'videos';
+const inferResourceType = (mimeType) => {
+  if (mimeType.startsWith('image/')) return 'image';
+  if (mimeType.startsWith('video/')) return 'video';
+  return 'raw';
+};
 
-  const fileUrl = `/uploads/${subDir}/${file.filename}`;
+const uploadToCloudinary = (fileBuffer, options) => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(options, (error, result) => {
+      if (error) return reject(error);
+      return resolve(result);
+    });
 
-  res.json({
-    fileUrl,
-    fileName: file.originalname,
-    fileSize: file.size,
-    mimeType: file.mimetype,
-    messageType: subDir === 'images' ? 'image' : subDir === 'videos' ? 'video' : 'file'
+    stream.end(fileBuffer);
   });
+};
+
+// Upload route handler
+const uploadFile = async (req, res) => {
+  try {
+    const file = req.file;
+    if (!file) return res.status(400).json({ error: 'No file uploaded' });
+
+    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+      return res.status(500).json({ error: 'Cloudinary is not configured on server' });
+    }
+
+    const messageType = inferMessageType(file.mimetype);
+    const resourceType = inferResourceType(file.mimetype);
+
+    const result = await uploadToCloudinary(file.buffer, {
+      folder: 'chatpulse-v2',
+      resource_type: resourceType,
+      use_filename: true,
+      unique_filename: true,
+      overwrite: false,
+    });
+
+    res.json({
+      fileUrl: result.secure_url,
+      fileName: file.originalname,
+      fileSize: file.size,
+      mimeType: file.mimetype,
+      messageType,
+    });
+  } catch (error) {
+    console.error('[UPLOAD] Cloudinary upload failed:', error.message);
+    res.status(500).json({ error: 'Upload failed. Please try again.' });
+  }
 };
 
 export { upload, uploadFile };

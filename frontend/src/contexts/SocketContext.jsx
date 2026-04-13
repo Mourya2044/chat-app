@@ -9,6 +9,10 @@ export const SocketProvider = ({ children }) => {
   const socketRef = useRef(null);
   const [connected, setConnected] = useState(false);
 
+  const socketUrl =
+    import.meta.env.VITE_SOCKET_URL ||
+    `${window.location.protocol}//${window.location.hostname}:5000`;
+
   useEffect(() => {
     if (!token) {
       if (socketRef.current) {
@@ -19,7 +23,7 @@ export const SocketProvider = ({ children }) => {
       return;
     }
 
-    const socket = io('http://localhost:5000', {
+    const socket = io(socketUrl, {
       auth: { token },
       transports: ['websocket', 'polling'],
       reconnection: true,
@@ -48,7 +52,7 @@ export const SocketProvider = ({ children }) => {
       socketRef.current = null;
       setConnected(false);
     };
-  }, [token]);
+  }, [token, socketUrl]);
 
   return (
     <SocketContext.Provider value={{ socket: socketRef.current, connected }}>

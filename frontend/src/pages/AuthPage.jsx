@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/Tabs';
@@ -22,7 +22,7 @@ export default function AuthPage() {
       } else {
         await register(form.username, form.email, form.password);
       }
-      toast.success(mode === 'login' ? 'Welcome back! 👋' : 'Account created! 🎉');
+      toast.success(mode === 'login' ? 'Welcome back!' : 'Account created!');
       navigate('/');
     } catch (err) {
       toast.error(err.response?.data?.error || 'Something went wrong');
@@ -36,21 +36,18 @@ export default function AuthPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-lg mb-4">
+        <div className="text-center mb-8 animate-fade-in">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-2xl mb-4 shadow-sm">
             <svg className="w-8 h-8 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
           </div>
-          <h1 className="text-3xl font-bold text-foreground">ChatPulse</h1>
-          <p className="text-muted-foreground mt-1">Real-time chat for everyone</p>
+          <h1 className="text-3xl font-extrabold tracking-tight text-foreground">ChatPulse v2</h1>
+          <p className="text-muted-foreground mt-1">Minimal real-time chat for your lab assignment</p>
         </div>
 
-        {/* Card */}
-        <div className="bg-card rounded-lg p-8 border border-border">
-          {/* Tabs */}
+        <div className="glass-card rounded-2xl p-8 animate-slide-up">
           <Tabs value={mode} onValueChange={setMode} defaultValue="login" className="w-full mb-6">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="login">Sign In</TabsTrigger>
@@ -104,7 +101,7 @@ export default function AuthPage() {
               />
             </div>
 
-            <Button type="submit" disabled={loading} className="w-full mt-2 h-11">
+            <Button type="submit" disabled={loading} className="w-full mt-2 h-11 rounded-xl">
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
                   <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
@@ -121,7 +118,7 @@ export default function AuthPage() {
         <p className="text-center text-muted-foreground text-sm mt-6">
           {mode === 'login' ? "Don't have an account? " : "Already have an account? "}
           <button onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
-            className="text-primary hover:text-blue-400">
+            className="text-primary hover:opacity-80">
             {mode === 'login' ? 'Sign up' : 'Sign in'}
           </button>
         </p>

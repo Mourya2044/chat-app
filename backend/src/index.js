@@ -1,8 +1,7 @@
-import express, { json, urlencoded, static as staticMiddleware } from 'express';
+import express, { json, urlencoded } from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
-import { join } from 'path';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -11,29 +10,24 @@ import initializeDatabase from './config/initDb.js';
 import routes from './routes/routes.js';
 import { authenticateSocket } from './middleware/auth.js';
 import setupSocket from './socket/socketHandler.js';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
 
 const app = express();
 const httpServer = createServer(app);
 
 // CORS configuration
+const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000,http://localhost:5173')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 const corsOptions = {
-  origin: process.env.NODE_ENV === 'production'
-    ? process.env.FRONTEND_URL
-    : ['http://localhost:3000', 'http://localhost:5173'],
+  origin: allowedOrigins,
   credentials: true,
 };
 
 app.use(cors(corsOptions));
 app.use(json({ limit: '10mb' }));
 app.use(urlencoded({ extended: true, limit: '10mb' }));
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-// const UPLOAD_DIR = join(__dirname, '../../uploads');
-
-app.use('/uploads', staticMiddleware(join(__dirname, '../uploads')));
 
 // API routes
 app.use('/api', routes);

@@ -47,13 +47,19 @@ const getChatroomById = async (req, res) => {
 const createChatroom = async (req, res) => {
   try {
     const { name, description, is_private } = req.body;
-    if (!name) return res.status(400).json({ error: 'Name is required' });
+    const normalizedName = String(name || '').trim();
+    const normalizedDescription = description ? String(description).trim().slice(0, 500) : null;
+
+    if (!normalizedName) return res.status(400).json({ error: 'Name is required' });
+    if (normalizedName.length < 2 || normalizedName.length > 80) {
+      return res.status(400).json({ error: 'Chatroom name must be 2-80 characters' });
+    }
 
     const result = await pool.query(
       `INSERT INTO chatrooms (name, description, is_private, created_by)
        VALUES ($1, $2, $3, $4)
        RETURNING *`,
-      [name, description, is_private || false, req.user.id]
+      [normalizedName, normalizedDescription, is_private || false, req.user.id]
     );
 
     const chatroom = result.rows[0];
@@ -75,6 +81,11 @@ const createChatroom = async (req, res) => {
 const joinChatroom = async (req, res) => {
   try {
     const { id } = req.params;
+
+    const room = await pool.query('SELECT id FROM chatrooms WHERE id = $1', [id]);
+    if (!room.rows[0]) {
+      return res.status(404).json({ error: 'Chatroom not found' });
+    }
 
     const existing = await pool.query(
       'SELECT 1 FROM chatroom_members WHERE chatroom_id = $1 AND user_id = $2',
@@ -133,6 +144,15 @@ const getChatroomMessages = async (req, res) => {
     const { id } = req.params;
     const { before, limit = 50 } = req.query;
 
+    const memberCheck = await pool.query(
+      'SELECT 1 FROM chatroom_members WHERE chatroom_id = $1 AND user_id = $2',
+      [id, req.user.id]
+    );
+
+    if (!memberCheck.rows[0]) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
     let query = `
       SELECT m.*, u.username as sender_username, u.avatar_url as sender_avatar,
         rm.content as reply_content, ru.username as reply_sender
@@ -149,7 +169,7 @@ const getChatroomMessages = async (req, res) => {
     }
 
     query += ` ORDER BY m.created_at DESC LIMIT $${params.length + 1}`;
-    params.push(parseInt(limit));
+    params.push(Math.min(Math.max(parseInt(limit, 10) || 50, 1), 100));
 
     const result = await pool.query(query, params);
     res.json({ messages: result.rows.reverse() });

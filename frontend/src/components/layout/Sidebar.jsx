@@ -8,7 +8,7 @@ import { Input } from '../ui/Input';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/Tabs';
 import { Badge } from '../ui/Badge';
 import axios from 'axios';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 import { Search, LogOut } from 'lucide-react'
 
 export default function Sidebar() {
@@ -62,12 +62,12 @@ export default function Sidebar() {
   };
 
   return (
-    <div className="w-72 bg-card border-r border-border flex flex-col h-full">
+    <div className="w-72 bg-card/85 backdrop-blur-sm border-r border-border flex flex-col h-full">
       {/* Header */}
       <div className="p-4 border-b border-border shrink-0">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 flex-1">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-primary rounded-xl flex items-center justify-center">
               <svg className="w-4 h-4 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                   d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -75,7 +75,7 @@ export default function Sidebar() {
             </div>
             <span className="font-bold text-foreground">ChatPulse</span>
           </div>
-          <div className={`w-2 h-2 rounded-full ${connected ? 'bg-green-800' : 'bg-red-800'}`} title={connected ? 'Connected' : 'Disconnected'} />
+          <div className={`w-2 h-2 rounded-full ${connected ? 'bg-emerald-500' : 'bg-rose-500'}`} title={connected ? 'Connected' : 'Disconnected'} />
         </div>
       </div>
 
@@ -104,7 +104,7 @@ export default function Sidebar() {
           </div>
 
           {showNewRoom && (
-            <form onSubmit={createRoom} className="mb-2 p-3 bg-muted rounded-lg space-y-2 mx-1">
+            <form onSubmit={createRoom} className="mb-2 p-3 bg-muted/70 rounded-xl space-y-2 mx-1 border border-border">
               <Input 
                 size="sm" 
                 placeholder="Room name" 
@@ -130,7 +130,7 @@ export default function Sidebar() {
           {chatrooms.map(room => (
             <button key={room.id} onClick={() => openChat({ type: 'chatroom', id: room.id, data: room })}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-md mb-0.5 transition-colors text-left
-                ${activeChat?.id === room.id ? 'bg-primary/20 text-foreground' : 'text-foreground hover:bg-muted hover:text-foreground'}`}>
+                ${activeChat?.id === room.id ? 'bg-primary/10 text-foreground border border-primary/20' : 'text-foreground hover:bg-muted/70 hover:text-foreground border border-transparent'}`}>
               <span className="text-lg">#</span>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{room.name}</p>
@@ -173,7 +173,7 @@ export default function Sidebar() {
           {conversations.map(conv => (
             <button key={conv.id} onClick={() => openChat({ type: 'dm', id: conv.id, data: conv })}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-md mb-0.5 transition-colors text-left
-                ${activeChat?.id === conv.id ? 'bg-primary/20 text-foreground' : 'hover:bg-muted'}`}>
+                ${activeChat?.id === conv.id ? 'bg-primary/10 text-foreground border border-primary/20' : 'hover:bg-muted/70 border border-transparent'}`}>
               <Avatar username={conv.partner_username} avatarUrl={conv.partner_avatar} size="sm"
                 showOnline isOnline={onlineUsers.has(conv.partner_id) || conv.partner_online} />
               <div className="flex-1 min-w-0">
@@ -199,7 +199,7 @@ export default function Sidebar() {
           showOnline isOnline />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-foreground truncate">{user?.username}</p>
-          <p className="text-xs text-green-700">Online</p>
+          <p className="text-xs text-emerald-600">Online</p>
         </div>
         <Button 
           onClick={logout} 

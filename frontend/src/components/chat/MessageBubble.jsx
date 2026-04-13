@@ -37,7 +37,7 @@ export default function MessageBubble({ message, showAvatar, chatroomId, convers
   }
 
   return (
-    <div className={`flex gap-3 group px-4 py-1 hover:bg-surface-800/30 ${isOwn ? 'flex-row-reverse' : ''}`}
+    <div className={`flex gap-3 group px-4 py-1 hover:bg-muted/40 ${isOwn ? 'flex-row-reverse' : ''}`}
       onMouseEnter={() => setShowActions(true)} onMouseLeave={() => setShowActions(false)}>
 
       {/* Avatar */}
@@ -99,7 +99,7 @@ export default function MessageBubble({ message, showAvatar, chatroomId, convers
 
             {/* Sensitive flag */}
             {message.flagged_sensitive && (
-              <span className="absolute -top-1 -right-1 text-xs"><TriangleAlert className="size-xs text-yellow-600"/></span>
+              <span className="absolute -top-1 -right-1 text-xs"><TriangleAlert className="w-3 h-3 text-yellow-700"/></span>
             )}
           </div>
         )}

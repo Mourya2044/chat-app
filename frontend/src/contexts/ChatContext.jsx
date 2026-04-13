@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, useRef } f
 import axios from 'axios';
 import { useSocket } from './SocketContext';
 import { useAuth } from './AuthContext';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 
 const ChatContext = createContext(null);
 
@@ -19,7 +19,11 @@ export const ChatProvider = ({ children }) => {
   const [pendingMessage, setPendingMessage] = useState(null); // For sensitive info confirmation
   const [members, setMembers] = useState([]);
 
-  const typingTimers = useRef({});
+  const activeChatRef = useRef(null);
+
+  useEffect(() => {
+    activeChatRef.current = activeChat;
+  }, [activeChat]);
 
   // Load chatrooms
   const loadChatrooms = useCallback(async () => {
@@ -92,6 +96,11 @@ export const ChatProvider = ({ children }) => {
 
     // New chatroom message
     socket.on('message:new', (message) => {
+      const current = activeChatRef.current;
+      if (!current || current.type !== 'chatroom' || current.id !== message.chatroom_id) {
+        return;
+      }
+
       setMessages(prev => {
         if (prev.find(m => m.id === message.id)) return prev;
         return [...prev, message];
@@ -100,6 +109,11 @@ export const ChatProvider = ({ children }) => {
 
     // New DM
     socket.on('dm:message', (message) => {
+      const current = activeChatRef.current;
+      if (!current || current.type !== 'dm' || current.id !== message.conversation_id) {
+        return;
+      }
+
       setMessages(prev => {
         if (prev.find(m => m.id === message.id)) return prev;
         return [...prev, message];
@@ -108,7 +122,7 @@ export const ChatProvider = ({ children }) => {
 
     // DM notification (message received but not in that chat)
     socket.on('dm:notification', ({ conversationId, senderUsername, preview }) => {
-      toast(`💬 ${senderUsername}: ${preview}`, { duration: 3000 });
+      toast(`${senderUsername}: ${preview}`);
       loadConversations();
     });
 
@@ -128,6 +142,13 @@ export const ChatProvider = ({ children }) => {
 
     // Typing
     socket.on('typing:start', ({ userId, username, chatroomId, conversationId }) => {
+      const current = activeChatRef.current;
+      const isSameChat = current && (
+        (current.type === 'chatroom' && current.id === chatroomId) ||
+        (current.type === 'dm' && current.id === conversationId)
+      );
+      if (!isSameChat) return;
+
       setTypingUsers(prev => ({ ...prev, [userId]: username }));
     });
 
@@ -160,12 +181,17 @@ export const ChatProvider = ({ children }) => {
     // Sensitive info warning
     socket.on('message:sensitive_warning', ({ message, pendingMessage }) => {
       setPendingMessage(pendingMessage);
-      toast(message, { duration: 0, icon: '⚠️', id: 'sensitive-warning' });
+      toast(message, {
+        duration: Infinity,
+        action: { label: 'Dismiss', onClick: () => {} },
+      });
     });
 
     // Troll soothing message
     socket.on('message:troll_warning', ({ message }) => {
-      toast(message, { duration: 6000, icon: '💙', style: { background: '#1e3a8a', color: '#fff' } });
+      toast.warning(message, {
+        duration: 6000,
+      });
     });
 
     return () => {
@@ -207,12 +233,12 @@ export const ChatProvider = ({ children }) => {
     if (!socket || !pendingMessage) return;
     socket.emit('message:confirm_send', pendingMessage);
     setPendingMessage(null);
-    toast.dismiss('sensitive-warning');
+    toast.dismiss();
   }, [socket, pendingMessage]);
 
   const cancelSensitiveMessage = useCallback(() => {
     setPendingMessage(null);
-    toast.dismiss('sensitive-warning');
+    toast.dismiss();
   }, []);
 
   const emitTyping = useCallback((isTyping) => {

@@ -264,6 +264,6 @@ Key tables: `users`, `chatrooms`, `chatroom_members`, `conversations`, `conversa
 | Styling | Tailwind CSS v3 |
 | HTTP Client | Axios |
 | Routing | React Router v6 |
-| Notifications | react-hot-toast |
+| Notifications | sonner |
 | AI (optional) | Groq API |
 | Containerization | Docker + Docker Compose |

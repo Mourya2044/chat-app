@@ -4,6 +4,11 @@ import { analyzeMessage } from '../utils/trollDetection.js';
 const connectedUsers = new Map(); // userId -> Set<socketId>
 const socketRooms = new Map();    // socketId -> Set<roomName>
 
+const sanitizeContent = (value) => {
+  if (typeof value !== 'string') return '';
+  return value.trim().slice(0, 5000);
+};
+
 const setupSocket = (io) => {
   io.on('connection', async (socket) => {
     const user = socket.user;
@@ -94,8 +99,14 @@ const setupSocket = (io) => {
           fileUrl, fileName, fileSize, replyToId,
         } = data;
 
+        const safeContent = sanitizeContent(content);
+
         if (!chatroomId) {
           return socket.emit('error', { message: 'Chatroom ID required' });
+        }
+
+        if (messageType === 'text' && !safeContent) {
+          return socket.emit('error', { message: 'Message content is required' });
         }
 
         // Verify membership
@@ -108,11 +119,11 @@ const setupSocket = (io) => {
         }
 
         // ── Analyze text messages only ───────────────────────
-        if (content && messageType === 'text') {
-          let analysis;
+        let analysis = null;
+        if (safeContent && messageType === 'text') {
 
           try {
-            analysis = await analyzeMessage(content, user.username);
+            analysis = await analyzeMessage(safeContent, user.username);
           } catch (err) {
             console.error('[AI] analyzeMessage failed:', err.message);
 
@@ -129,47 +140,50 @@ const setupSocket = (io) => {
           if (analysis.isSensitive) {
             socket.emit('message:sensitive_warning', {
               message: '⚠️ This message may contain sensitive information. Are you sure you want to send it?',
-              pendingMessage: data,
+              pendingMessage: {
+                ...data,
+                content: safeContent,
+              },
             });
             return;
-          }
-
-          if (analysis.isTroll) {
-            // 🔥 LLM-generated warning message
-            socket.emit('message:troll_warning', {
-              message: analysis.warningMessage || 'Please keep the conversation respectful.',
-              severity: analysis.severity,
-              type: 'ai-warning',
-            });
-
-            // 🔥 Log with severity + AI response
-            pool.query(
-              `INSERT INTO troll_logs (user_id, chatroom_id, detection_reason, ai_response)
-       VALUES ($1, $2, $3, $4)`,
-              [
-                user.id,
-                chatroomId,
-                `AI-${analysis.severity}`,   // 👈 upgraded logging
-                analysis.warningMessage
-              ]
-            ).catch(err => console.error('[TROLL LOG] Failed:', err.message));
           }
         }
 
         // ── Save message ─────────────────────────────────────
         const result = await pool.query(
           `INSERT INTO messages
-             (content, message_type, file_url, file_name, file_size, sender_id, chatroom_id, reply_to_id)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+             (content, message_type, file_url, file_name, file_size, sender_id, chatroom_id, reply_to_id, troll_flag)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
            RETURNING *`,
           [
-            content || null, messageType,
+            safeContent || null, messageType,
             fileUrl || null, fileName || null, fileSize || null,
             user.id, chatroomId, replyToId || null,
+            Boolean(analysis?.isTroll),
           ]
         );
 
         const message = result.rows[0];
+
+        if (analysis?.isTroll) {
+          socket.emit('message:troll_warning', {
+            message: analysis.warningMessage || 'Please keep the conversation respectful.',
+            severity: analysis.severity,
+            type: 'ai-warning',
+          });
+
+          pool.query(
+            `INSERT INTO troll_logs (message_id, user_id, chatroom_id, detection_reason, ai_response)
+             VALUES ($1, $2, $3, $4, $5)`,
+            [
+              message.id,
+              user.id,
+              chatroomId,
+              `AI-${analysis.severity}`,
+              analysis.warningMessage,
+            ]
+          ).catch((err) => console.error('[TROLL LOG] Failed:', err.message));
+        }
 
         // Fetch reply context if needed
         let replyData = null;
@@ -213,13 +227,26 @@ const setupSocket = (io) => {
           fileUrl, fileName, fileSize, replyToId,
         } = data;
 
+        const safeContent = sanitizeContent(content);
+        if (!chatroomId) {
+          return socket.emit('error', { message: 'Chatroom ID required' });
+        }
+
+        const memberCheck = await pool.query(
+          'SELECT 1 FROM chatroom_members WHERE chatroom_id = $1 AND user_id = $2',
+          [chatroomId, user.id]
+        );
+        if (!memberCheck.rows[0]) {
+          return socket.emit('error', { message: 'You are not a member of this chatroom' });
+        }
+
         const result = await pool.query(
           `INSERT INTO messages
              (content, message_type, file_url, file_name, file_size, sender_id, chatroom_id, reply_to_id, flagged_sensitive)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, true)
            RETURNING *`,
           [
-            content || null, messageType,
+            safeContent || null, messageType,
             fileUrl || null, fileName || null, fileSize || null,
             user.id, chatroomId, replyToId || null,
           ]
@@ -245,6 +272,8 @@ const setupSocket = (io) => {
           fileUrl, fileName, fileSize,
         } = data;
 
+        const safeContent = sanitizeContent(content);
+
         const check = await pool.query(
           'SELECT 1 FROM conversation_participants WHERE conversation_id = $1 AND user_id = $2',
           [conversationId, user.id]
@@ -253,13 +282,17 @@ const setupSocket = (io) => {
           return socket.emit('error', { message: 'Access denied' });
         }
 
+        if (messageType === 'text' && !safeContent) {
+          return socket.emit('error', { message: 'Message content is required' });
+        }
+
         const result = await pool.query(
           `INSERT INTO messages
              (content, message_type, file_url, file_name, file_size, sender_id, conversation_id)
            VALUES ($1, $2, $3, $4, $5, $6, $7)
            RETURNING *`,
           [
-            content || null, messageType,
+            safeContent || null, messageType,
             fileUrl || null, fileName || null, fileSize || null,
             user.id, conversationId,
           ]
@@ -289,7 +322,7 @@ const setupSocket = (io) => {
                 conversationId,
                 senderId: user.id,
                 senderUsername: user.username,
-                preview: content ? content.substring(0, 50) : '📎 File',
+                preview: safeContent ? safeContent.substring(0, 50) : '📎 File',
               });
             });
           }

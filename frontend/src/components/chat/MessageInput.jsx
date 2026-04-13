@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import axios from 'axios';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 import { useChat } from '../../contexts/ChatContext';
 import { Button } from '../ui/Button';
 import { Textarea } from '../ui/Textarea';

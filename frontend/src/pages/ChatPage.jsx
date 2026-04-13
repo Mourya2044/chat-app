@@ -3,7 +3,7 @@ import ChatWindow from '../components/chat/ChatWindow';
 
 export default function ChatPage() {
   return (
-    <div className="flex h-screen overflow-hidden bg-surface-950">
+    <div className="flex h-screen overflow-hidden bg-background">
       <Sidebar />
       <ChatWindow />
     </div>

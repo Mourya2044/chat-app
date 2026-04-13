@@ -1,46 +1,16 @@
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: chatpulse-db
-    environment:
-      POSTGRES_DB: chatapp
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: chatpulse_dev_pass
-    ports:
-      - "5432:5432"
-    command: >
-      postgres
-      -c ssl=off
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
   backend:
       build:
         context: ./backend
         dockerfile: Dockerfile
       container_name: chatpulse-backend
+      env_file:
+        - ./backend/.env
       environment:
         PORT: 5000
         NODE_ENV: development
-        DB_HOST: postgres
-        DB_PORT: 5432
-        DB_NAME: chatapp
-        DB_USER: postgres
-        DB_PASSWORD: chatpulse_dev_pass
-        JWT_SECRET: change_this_in_production_super_secret
-        JWT_EXPIRES_IN: 7d
       ports:
         - "5000:5000"
-      volumes:
-        - /app/node_modules          # ← drop bind mount, let watch handle sync
-      depends_on:
-        postgres:
-          condition: service_healthy
       command: npm run dev
       develop:
         watch:
@@ -62,10 +32,11 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: chatpulse-frontend
+    environment:
+      VITE_API_PROXY_TARGET: http://chatpulse-backend:5000
+      VITE_SOCKET_URL: http://localhost:5000
     ports:
       - "3000:3000"
-    volumes:
-      - /app/node_modules          # 2. Keep this to protect container node_modules
     depends_on:
       - backend
     command: npm run dev
@@ -80,6 +51,3 @@ services:
         - action: rebuild
           path: ./frontend/package.json
 
-volumes:
-  postgres_data:
-  uploads_data:

@@ -48,6 +48,11 @@ const getOrCreateConversation = async (req, res) => {
     if (!partnerId) return res.status(400).json({ error: 'Partner ID required' });
     if (partnerId === req.user.id) return res.status(400).json({ error: 'Cannot DM yourself' });
 
+    const partnerExists = await pool.query('SELECT id FROM users WHERE id = $1', [partnerId]);
+    if (!partnerExists.rows[0]) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
     // Check if conversation already exists
     const existing = await pool.query(
       `SELECT c.id FROM conversations c
@@ -101,7 +106,7 @@ const getConversationMessages = async (req, res) => {
       query += ` AND m.created_at < $${params.length}`;
     }
     query += ` ORDER BY m.created_at DESC LIMIT $${params.length + 1}`;
-    params.push(parseInt(limit));
+    params.push(Math.min(Math.max(parseInt(limit, 10) || 50, 1), 100));
 
     const result = await pool.query(query, params);
     res.json({ messages: result.rows.reverse() });
@@ -113,7 +118,7 @@ const getConversationMessages = async (req, res) => {
 // GET /api/users/search
 const searchUsers = async (req, res) => {
   try {
-    const { q } = req.query;
+    const q = String(req.query.q || '').trim();
     if (!q || q.length < 2) return res.json({ users: [] });
 
     const result = await pool.query(

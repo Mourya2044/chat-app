@@ -23,13 +23,13 @@ export default function ChatWindow() {
     return (
       <div className="flex-1 flex items-center justify-center bg-background">
         <div className="text-center">
-          <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-20 h-20 bg-card border border-border rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
             <svg className="w-10 h-10 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                 d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
           </div>
-          <h3 className="text-lg font-medium text-foreground">Welcome to ChatPulse</h3>
+          <h3 className="text-lg font-semibold text-foreground">Welcome to ChatPulse v2</h3>
           <p className="text-muted-foreground mt-1">Select a channel or DM to start chatting</p>
         </div>
       </div>
@@ -52,10 +52,10 @@ export default function ChatWindow() {
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-card">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-card/90 backdrop-blur-sm">
         <div className="flex items-center gap-3">
           {isRoom ? (
-            <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-primary/10 rounded-lg border border-primary/20 flex items-center justify-center">
               <span className="text-primary font-bold">#</span>
             </div>
           ) : (
@@ -126,7 +126,7 @@ export default function ChatWindow() {
 
         {/* Members panel */}
         {showMembers && isRoom && (
-          <ScrollArea className="w-56 bg-card border-l border-border">
+          <ScrollArea className="w-56 bg-card/90 border-l border-border">
             <div className="p-3 border-b border-border">
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Members — {members.length}
@@ -138,7 +138,7 @@ export default function ChatWindow() {
                   <Avatar username={m.username} avatarUrl={m.avatar_url} size="xs"
                     showOnline isOnline={onlineUsers.has(m.id) || m.is_online} />
                   <span className="text-sm text-foreground truncate">{m.username}</span>
-                  {m.role === 'admin' && <span className="ml-auto text-xs text-amber-400">Admin</span>}
+                  {m.role === 'admin' && <span className="ml-auto text-xs text-amber-600">Admin</span>}
                 </div>
               ))}
             </div>
@@ -148,8 +148,8 @@ export default function ChatWindow() {
 
       {/* Sensitive message confirmation */}
       {pendingMessage && (
-        <div className="mx-4 mb-2 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
-          <p className="text-sm text-amber-300 mb-2">
+        <div className="mx-4 mb-2 p-3 bg-amber-100/80 border border-amber-300 rounded-xl">
+          <p className="text-sm text-amber-900 mb-2">
             ⚠️ This message might contain sensitive info (OTP, password, card number). Send to group anyway?
           </p>
           <div className="flex gap-2">
