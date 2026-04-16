@@ -150,7 +150,7 @@ export default function ChatWindow() {
       {pendingMessage && (
         <div className="mx-4 mb-2 p-3 bg-amber-100/80 border border-amber-300 rounded-xl">
           <p className="text-sm text-amber-900 mb-2">
-            ⚠️ This message might contain sensitive info (OTP, password, card number). Send to group anyway?
+            This message might contain sensitive info (OTP, password, card number). Send to group anyway?
           </p>
           <div className="flex gap-2">
             <Button 
